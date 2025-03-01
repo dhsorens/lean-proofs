@@ -176,8 +176,60 @@ def odd (n : Nat) : Prop := n % 2 = 1
 def even2 (n : Nat) : Prop := ¬ odd n
 def odd2 (n : Nat) : Prop := ¬ (even n)
 
-example : ∀ n, odd n ↔ odd2 n := sorry
-example : ∀ n, even n ↔ even2 n := sorry
+def zero_even : even 0 := by unfold even; simp
+
+theorem mod_two : ∀ n, n % 2 = 0 ∨ n % 2 = 1 := by
+  intro n
+  induction n with
+  | zero => apply Or.inl; simp
+  | succ n h =>
+    cases h with
+    | inl h =>
+      apply Or.inr
+      rw [Nat.add_mod, h]
+    | inr h =>
+      apply Or.inl
+      rw [Nat.add_mod, h]
+
+theorem odd_defn : ∀ n, odd n ↔ odd2 n := by
+  intro n
+  constructor
+  . unfold odd2 even odd
+    intro h_odd
+    intro h_even
+    rw [h_odd] at h_even
+    contradiction
+  . unfold odd2 even odd
+    intro h_even
+    have h_mod := mod_two n
+    cases h_mod with
+    | inl h_mod => contradiction
+    | inr h_mod => trivial
+
+theorem even_defn : ∀ n, even n ↔ even2 n := by
+  intro n
+  constructor
+  . unfold even even2 odd
+    intro h_even
+    intro h_odd
+    rw [h_even] at h_odd
+    contradiction
+  . unfold even2 odd even
+    intro h_even
+    have h_mod := mod_two n
+    cases h_mod with
+    | inl h_mod => exact h_mod
+    | inr h_mod => contradiction
+
+theorem n_even_or_odd : forall n, even n ∨ odd n := by
+  intro n
+  unfold even odd
+  induction n with
+  | zero => apply Or.inl; simp
+  | succ n h_ind =>
+    cases h_ind with
+    | inl h => apply Or.inr ; rw [Nat.add_mod, h]
+    | inr h => apply Or.inl ; rw [Nat.add_mod, h]
 
 -- definitions
 
@@ -198,6 +250,20 @@ example : ∀ n m, even n → even m → even (n * m) := by
   unfold even at *
   rw [Nat.mul_mod, hm, hn]
 
+example : ∀ n m, even n → odd m → odd (n + m) := by
+  unfold even odd
+  intro n m h_n h_m
+  rw [Nat.add_mod, h_n, h_m]
+
+example : ∀ n m, odd n → odd m → even (n + m) := by
+  unfold odd even
+  intro n m h_n h_m
+  rw [Nat.add_mod, h_n, h_m]
+
+example : ∀ n m, odd n → odd m → odd (n * m) := by
+  unfold odd
+  intro n m h_n h_m
+  rw [Nat.mul_mod, h_n, h_m]
 
 end parity
 
